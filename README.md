@@ -14,7 +14,7 @@ This is a beta version for testing.
 ## Options
 - [x] ssh keys auto insertion to kubernetes/secrets
 - [x] hostname setup with auto prefix from scripts/configure variable
-- [x] credentials from only stored in ignored file .cfg/{hostname}
+- [x] credentials only stored in ignored file .cfg/.{hostname}.cfg
 
 ---
 
