@@ -5,10 +5,10 @@
 # master /etc/host entry or DNS entry for access host to k8s cluster
 # os_user user on the os on the k8s nodes.
 
-prefix=dw
-key_type=rsa
-master=k8s-dw-master-01
-os_user=centos
+# prefix=dw
+# key_type=rsa
+# master=k8s-master-01
+# os_user=centos
 
 function validate
 {
