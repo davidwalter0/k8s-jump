@@ -10,16 +10,17 @@ ssh service into a k8s cluster.
 This is a beta version for testing.
 
 ---
-Options
-[x] ssh keys auto insertion to kubernetes/secrets
-[x] hostname setup with auto prefix from scripts/configure variable
-[x] credentials from only stored in ignored file .cfg/{hostname}
+
+## Options
+- [x] ssh keys auto insertion to kubernetes/secrets
+- [x] hostname setup with auto prefix from scripts/configure variable
+- [x] credentials from only stored in ignored file .cfg/{hostname}
 
 ---
 
 ```
-## test repo container name k8s-jump
-## For a docker based test . . .
+# test repo container name k8s-jump
+# For a docker based test . . .
 # .bashrc function for docker ip
 function docker-ip
 {
@@ -29,7 +30,7 @@ function docker-ip
         echo usage: docker-ip cid
     fi
 }
-
+# example test run
 sudo docker run --name k8s-jump -itd k8s-jump
 ssh $(docker-ip k8s-jump)
 docker stop k8s-jump
@@ -56,7 +57,7 @@ variable syntax or source environment variables with the values for
 the kubernetes kubectl access.
 
 ```
-# script/credentials
+## script/credentials
 user=name
 password=password
 ```
@@ -67,14 +68,14 @@ Currently the script generates a .cfg/{cluster-name} file with
 kubernetes configuration.
 
 ---
-# script/configure
+## script/configure
 
 validates the presence of prefix and key_type.
 
 A function validate evaluates that the required variables are set.
 
 ---
-# .ssh/config
+## .ssh/config
 
 A sample ssh per use config option might look like the following, to
 enable key only access. Ensure that the key type matches the key type
