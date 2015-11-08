@@ -1,0 +1,35 @@
+#!/bin/bash
+# The next incarnation will use a git repo pulled into the
+# jenkins home
+
+# volumes mapped from git repo
+
+# These scripts assume a directory structure on the target of
+# under the jenkins home of 
+# .../
+#         /.cfg    # secrets [ until we get k8s secrets + vault ]
+#         /bin     # kubectl or other binaries
+#         /k8s     # yaml configs
+#         /scripts # this script and collections of other helpers
+function check
+{
+    if [[ ! ${dir:-} ]]; then
+        echo "dir: variable not set"
+        echo "A recipe in the script sourcing this file may work:"
+        echo "dir=\$(readlink -f \$(dirname \$(readlink -f \${0}))/..)"
+        exit 3
+    fi
+}
+
+check
+# defer evaluation of the directory variable /go/home/k8s/jenkins is
+# to enable location independence.
+if ! [[ -e ${KUBECONFIG} ]]; then
+   . ${dir}/scripts/credentials
+   mkdir -p ${dir}/.cfg
+   chmod 700 ${dir}/.cfg
+   ${KUBECTL} config --kubeconfig=${KUBECONFIG} set-cluster k8s --server=https://${KUBE_MASTER}:443 --insecure-skip-tls-verify=true
+   ${KUBECTL} config --kubeconfig=${KUBECONFIG} set-credentials cluster-admin --username=${user} --password=${password}
+   ${KUBECTL} config --kubeconfig=${KUBECONFIG} set-context k8s --cluster=k8s --user=cluster-admin
+   ${KUBECTL} config --kubeconfig=${KUBECONFIG} use-context k8s
+fi

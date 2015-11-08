@@ -1,0 +1,59 @@
+#!/bin/bash
+verbose=0
+function clean
+{
+    signal=${1}
+    printf "\nSignal ${signal} clean up begun . . . "
+    rm -f /home/git/.ssh/*
+    printf "done.\n"
+    exit 0
+}
+
+function setup-traps
+{
+    wrap="$1" ; shift
+    call="$1" ; shift
+    for sig ; do
+        trap "${wrap} ${call} ${sig}" "${sig}"
+    done
+}
+
+function wrap-trap-func
+{
+    if ((verbose)); then
+        printf "\nTrapped: ${2}. Calling ${1} from signal ${2} "
+    fi
+    ${1} ${2}
+}
+
+# setup by calling wrap with args for the function to call and the
+# signal name to trap
+# Example docker test after pasting text into ../scripts/enter
+
+# docker run --rm -it -v ${PWD}/scripts/enter:/enter \
+#                                k8s-git-repo /enter
+
+setup-traps wrap-trap-func clean EXIT KILL TERM INT HUP ILL QUIT USR1 USR2 SEGV STOP
+
+while [[ ! -e /home/git/.private/authorized-keys ]]; do
+    sleep 1;
+done;
+pushd /home/git/.private/
+
+chmod 700 *;
+chown git *;
+pushd /home/git/.ssh/
+for file in /home/git/.private/*; do
+    name=${file//-/_}
+    # If the secrets are copied then the dead container
+    # exposes the secret. Since this is a public key, it
+    # might be okay, but for getting into good habits. . .
+    # soft link as the owner
+    su -c "ln -sf ${file} ${name##*/}" git
+done;
+chmod -R 700 /home/git/{.private,.ssh} ;
+chown -R git /home/git/{.private,.ssh} ;
+
+echo Running sshd . . .
+/usr/sbin/sshd -D
+echo Exiting . . .

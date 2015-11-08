@@ -1,0 +1,21 @@
+#!/bin/bash
+# prefix might be your initials or other distinguishing text for a
+# process/rc,svc,pod,ep,namespace
+prefix=dw
+key_type=rsa
+
+function validate
+{
+    valid=$1
+    eval "#!/bin/bash -x
+    if [[ \${0} != /bin/bash ]]; then
+        if [[ ! \${${valid}:-} ]]; then
+            echo 'required [scripts/configure] option: ${valid} not set';
+            exit 3;
+        fi;
+    fi;
+    #echo \${${valid}}
+"
+}
+validate prefix
+validate key_type

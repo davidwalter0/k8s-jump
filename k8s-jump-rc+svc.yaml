@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: k8s-jump
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  namespace: k8s-jump
+  name: k8s-jump
+  labels:
+    app: k8s-jump
+    version: v0.1
+    release: canary
+spec:
+  replicas: 1
+  selector:
+    app: k8s-jump
+    version: v0.1
+  template:
+    metadata:
+      labels:
+        app: k8s-jump
+        version: v0.1
+        release: canary
+    spec:
+      containers:
+      - name: k8s-jump
+        image: k8s-jump
+        imagePullPolicy: IfNotPresent
+        command: 
+        - /bin/bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          verbose=0
+
+          # ########################################################
+          # bash signal handlers are executed by docker, but signal
+          # handler [traps] don't appear to be seen by rc delete or
+          # stop in kubernetes v1, commenting for future reference
+          # ########################################################
+
+          # function clean
+          # {
+          #     signal=${1}
+          #     printf "\nSignal ${signal} clean up begun . . . "
+          #     rm -f /home/jump/.ssh/*
+          #     printf "done.\n"
+          #     exit 0
+          # }
+
+          # function setup-traps
+          # {
+          #     wrap="$1" ; shift
+          #     call="$1" ; shift
+          #     for sig ; do
+          #         trap "${wrap} ${call} ${sig}" "${sig}"
+          #     done
+          # }
+
+          # function wrap-trap-func
+          # {
+          #     if ((verbose)); then
+          #         printf "\nTrapped: ${2}. Calling ${1} from signal ${2} "
+          #     fi
+          #     ${1} ${2}
+          # }
+          # # setup by calling wrap with args for the function to call and the
+          # # signal name to trap
+          # setup-traps wrap-trap-func clean EXIT KILL TERM INT HUP ILL QUIT USR1 USR2 SEGV STOP
+
+          while [[ ! -e /home/jump/.private/authorized-keys ]]; do
+              sleep 1;
+          done;
+          pushd /home/jump/.private/
+
+          chmod 700 *;
+          chown jump *;
+          pushd /home/jump/.ssh/
+          for file in /home/jump/.private/*; do
+              name=${file//-/_}
+              #######################################################
+              # If the secrets are copied then the dead container may
+              # expose the secret. Since this is a public key, it
+              # might be okay, but for getting into a good habit soft
+              # link as the owner, leaving it in the secret store.
+              # ######################################################
+              su -c "ln -sf ${file} ${name##*/}" jump
+          done;
+          chmod -R 700 /home/jump/{.private,.ssh} ;
+          chown -R jump /home/jump/{.private,.ssh} ;
+
+          echo Running sshd . . .
+          /usr/sbin/sshd -D
+          echo Exiting . . .
+        ports:
+        - containerPort: 22
+        volumeMounts:
+        - mountPath: /home/jump/.private
+          name: secret-volume
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: ssh-key-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: k8s-jump
+  name: k8s-jump
+  labels:
+    app: k8s-jump
+spec:
+  selector:
+    app: k8s-jump
+  ports:
+  - port: 22
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: k8s-jump
+  name: ssh-key-secret
+data:
+  id-: #$(base64 -w 0 ~/.ssh/id_rsa)
+  id-.pub: #$(base64 -w 0 ~/.ssh/id_rsa.pub)
+  authorized-keys: #$(base64 -w 0 ~/.ssh/id_rsa.pub)
+
+# local variables:
+# comment-start: "# "
+# mode: shell-script
+# end:

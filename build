@@ -1,0 +1,42 @@
+#!/bin/bash
+user=jump
+dir=$(dirname $(readlink -f ${0}))
+cat > Dockerfile <<EOF
+FROM ubuntu:15.04
+
+RUN apt-get -y update ;                                         \
+    apt-get -y install openssh-server openssh-client sshpass ;  \
+    apt-get -y install git bash ;                               \
+    apt-get -y clean; apt-get -y autoclean ;                    \
+    locale-gen en_US ;                                          \
+    locale-gen en_US.UTF-8 ; 
+# Setting openssh
+RUN mkdir -p /etc/ssh /var/run/sshd ;
+RUN     sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" /etc/ssh/sshd_config ;
+#RUN     ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N "";
+#RUN     ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N "";
+#RUN     ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N "";
+#RUN     ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""; 
+
+# Adding jump user
+RUN adduser --system jump ;                      \
+    mkdir -p /home/jump/.ssh
+
+# Clearing and setting authorized ssh keys and hushlogin / motd
+RUN touch /home/jump/.ssh/authorized_keys ;                                      \
+    touch /home/jump/.hushlogin;                                                 \
+    chmod 700 /home/jump/.ssh; chown jump -R /home/jump
+# ...
+
+# Updating shell to bash
+RUN sed -i s#/home/jump:/bin/false#/home/jump:/bin/bash# /etc/passwd ;    \
+    service sshd start || true || service sshd stop || true ;           \
+    service ssh start || true || service ssh stop || true ;
+
+# COPY entry /entry
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
+# CMD ["/entry"]
+EOF
+
+docker build --force-rm --rm --tag k8s-jump ${dir}
