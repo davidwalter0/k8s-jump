@@ -9,6 +9,14 @@ ssh service into a k8s cluster.
 
 This is a beta version for testing.
 
+---
+Options
+[x] ssh keys auto insertion to kubernetes/secrets
+[x] hostname setup with auto prefix from scripts/configure variable
+[x] credentials from only stored in ignored file .cfg/{hostname}
+
+---
+
 ```
 ## test repo container name k8s-jump
 ## For a docker based test . . .
