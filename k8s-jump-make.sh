@@ -47,10 +47,11 @@ git push ${prefix}-${repo} master
 EOF
 git remote add ${repo} git@${host}:${repo}.git
 git push --set-upstream ${repo} master
+git push ${repo} master
 git remote add ${prefix}-${repo} git@${prefix}-${host}:${repo}.git
 git push ${prefix}-${repo} master
 
-git remote add ${repo} git@github.com:davidwalter0/${repo}.git
+git remote add github git@github.com:davidwalter0/${repo}.git
 
 # alternatively 
 # git remote add origin git@${host}:${repo}.git
