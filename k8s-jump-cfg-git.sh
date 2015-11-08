@@ -19,7 +19,7 @@ host=${prefix}-k8s-git-repo
 
 <<MSG
 # prefix from scripts/configure
-host {prefix}-k8s-jump
+host ${prefix}-k8s-jump
   User                  git
 #  Port                  2222
 # the name I have the k8s service. . .
@@ -30,8 +30,6 @@ host {prefix}-k8s-jump
 # If connecting from non local work laptop for example . . .
   ProxyCommand       ssh -XC -A k8s-master-01 -W '%h:%p'
 MSG
-
-# ssh ${host} 'echo ${HOSTNAME}'
 
 ssh ${host}<<INIT
 mkdir ${repo}.git
@@ -48,7 +46,3 @@ git push --set-upstream ${repo} master
 git push ${repo} master
 
 git remote add github git@github.com:davidwalter0/${repo}.git
-
-# alternatively 
-# git remote add origin git@${host}:${repo}.git
-# git push --set-upstream origin master
