@@ -4,7 +4,7 @@ dir=$(dirname $(readlink -f ${0}))
 # directory isn't the same as the directory's base name.
 . ${dir}/scripts/configure
 repo=${dir##*/}
-host=k8s-git-repo
+host=${prefix}-k8s-git-repo
 
 # .ssh/config entry to enable simple access
 
@@ -42,14 +42,10 @@ INIT
 cat <<EOF
 git remote add ${repo} git@${host}:${repo}.git
 git push --set-upstream ${repo} master
-git remote add ${prefix}-${repo} git@${prefix}-${host}:${repo}.git
-git push ${prefix}-${repo} master
 EOF
 git remote add ${repo} git@${host}:${repo}.git
 git push --set-upstream ${repo} master
 git push ${repo} master
-git remote add ${prefix}-${repo} git@${prefix}-${host}:${repo}.git
-git push ${prefix}-${repo} master
 
 git remote add github git@github.com:davidwalter0/${repo}.git
 
