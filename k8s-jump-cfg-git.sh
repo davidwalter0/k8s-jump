@@ -45,4 +45,5 @@ git remote add ${repo} git@${host}:${repo}.git
 git push --set-upstream ${repo} master
 git push ${repo} master
 
-git remote add github git@github.com:davidwalter0/${repo}.git
+git remote add github git@github.com:${hubuid}/${repo}.git
+

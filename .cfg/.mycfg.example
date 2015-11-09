@@ -1,0 +1,15 @@
+# example configuration.
+# please modify for your requirements
+export debug=0
+export prefix=dw
+export ssh_key_type=rsa
+export master=k8s-dw-master-01
+export os_user=centos
+export name=${dir##*/}
+export yaml=${dir}/${name}.yaml
+export inyaml=${dir}/${name}-template.yaml
+export make_yaml_file=${dir}/.cfg/make-yaml
+export hubuid=davidwalter0
+# default repo name is the subdirectory of the project
+export k8srepo="git@dw-k8s-git-repo:${name}.git"
+export hubrepo="git@github.com:${hubuid}/${name}.git"

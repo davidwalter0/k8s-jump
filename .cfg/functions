@@ -1,4 +1,7 @@
 #!/bin/bash
+# set -o errexit
+set -o nounset
+set -o pipefail
 # The next incarnation will use a git repo pulled into the
 # jenkins home
 
@@ -26,15 +29,13 @@ check
 mkdir -p ${dir}/.cfg  ${dir}/.private
 chmod 700 ${dir} ${dir}/.cfg ${dir}/.private
 
-if [[ ! -e ${dir}/.cfg ]]; then
-    echo Unconfigured options directory .cfg
+if [[ ! -e ${dir}/.cfg/options ]]; then
+    echo Unconfigured options [.cfg/options]
     exit 3
 fi
 
 . ${dir}/.cfg/options
 
-# defer evaluation of the directory variable /go/home/k8s/jenkins is
-# to enable location independence.
 if ! [[ -e ${kubeconfig} ]]; then
     printf "k8s username: ";
     read -r username
@@ -51,9 +52,19 @@ if ! [[ -e ${kubeconfig} ]]; then
 fi
 
 export kubectl="${kubectl} --kubeconfig=${kubeconfig}"
+if [[ -e ${make_yaml_file} ]]; then
+    . ${make_yaml_file}
+fi
+if [[ ! -e ${make_yaml_file} || ! ${make-yaml:-} ]]; then
+    echo "Required function make-yaml is not defined"
+    echo "It's simplest form could be cat of the yaml file."
+    echo "Any function that dumps the yaml on stdout, such as a sed stream edit may also be used."
+    exit 3
+fi
 
 function start
 {
+    generate
     ${kubectl} create -f- <<EOF
 $(make-yaml)
 EOF
@@ -73,7 +84,7 @@ function status
     ${kubectl} get --all-namespaces --output=wide rc,pods,svc,ep
 }
 
-function main
+function generate
 {
     rm -f ${yaml}
     if (( debug )); then
@@ -83,10 +94,26 @@ function main
         fi
         chmod 600 ${yaml}
     fi
+}
 
+function main
+{
     if (( $# )) ; then
+        # set flags prior to calling any methods
         for arg in ${@}; do
             case ${arg} in
+                --debug)
+                    debug=1
+                    ;;
+                --verbose)
+                    verbose=1
+                    ;;
+            esac
+        done
+        for arg in ${@}; do
+            case ${arg} in
+                --debug|--verbose) # ignore these, don't generate a usage call
+                    ;;
                 --start)
                     start
                     ;;

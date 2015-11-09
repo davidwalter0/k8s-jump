@@ -89,9 +89,32 @@ spec:
               # ######################################################
               su -c "ln -sf ${file} ${name##*/}" jump
           done;
-          chmod -R 700 /home/jump/{.private,.ssh} ;
-          chown -R jump /home/jump/{.private,.ssh} ;
+          cat > /home/jump/.ssh/config <<EOF
+          UserKnownHostsFile      /dev/null
+          StrictHostKeyChecking   no
+          LogLevel                quiet
+          # LogLevel              verbose
+          VerifyHostKeyDNS        no
+          ForwardX11Trusted       yes
+          ForwardAgent            yes
+          ForwardX11              yes
+          ConnectTimeout          30
+          TCPKeepAlive            yes
+          ServerAliveCountMax     5
+          ControlMaster           no
+          Compression             yes
+          # if GSSAPIAuthentication is yes but hosts don't support it,
+          # connections are slower.
+          GSSAPIAuthentication    no
+          EOF
 
+          # mkdir -p /home/jump/git
+          # cd /home/jump/git
+
+          # chmod -R 700 /home/jump/{.private,.ssh} ;
+          # chown -R jump /home/jump/{.private,.ssh,git} ;
+          # su -c 'git clone git@dw-k8s-git-repo:k8s-git-repo.git' jump
+          # ls -l k8s-git-repo
           echo Running sshd . . .
           /usr/sbin/sshd -D
           echo Exiting . . .
@@ -100,6 +123,8 @@ spec:
         volumeMounts:
         - mountPath: /home/jump/.private
           name: secret-volume
+        - mountPath: /home/jump/git
+          name: k8s-git-repo
       volumes:
       - name: secret-volume
         secret:
@@ -117,6 +142,7 @@ spec:
     app: k8s-jump
   ports:
   - port: 22
+    name: ssh
 ---
 apiVersion: v1
 kind: Secret
