@@ -70,7 +70,7 @@ kubernetes configuration.
 ---
 ## script/configure
 
-validates the presence of prefix and key_type.
+validates the presence of prefix and ssh_key_type.
 
 A function validate evaluates that the required variables are set.
 
@@ -79,7 +79,7 @@ A function validate evaluates that the required variables are set.
 
 A sample ssh per use config option might look like the following, to
 enable key only access. Ensure that the key type matches the key type
-used in the identity file and script/configure key_type, notice that
+used in the identity file and script/configure ssh_key_type, notice that
 this 'jumps' via a k8s-master-01.
 
 ```
@@ -88,7 +88,7 @@ host *k8s-jump
   Port                  22
   IdentitiesOnly        yes
   TCPKeepAlive          yes
-  #                            id_{key_type}
+  #                            id_{ssh_key_type}
   IdentityFile          ~/.ssh/id_rsa
   ProxyCommand          ssh -XCA k8s-master-01 -W '%h:%p'
 ```
