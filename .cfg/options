@@ -5,10 +5,13 @@
 # master /etc/host entry or DNS entry for access host to k8s cluster
 # os_user user on the os on the k8s nodes.
 
-# prefix=dw
-# key_type=rsa
-# master=k8s-master-01
-# os_user=centos
+prefix=dw
+key_type=rsa
+master=k8s-dw-master-01
+os_user=centos
+name=${dir##*/}
+yaml=${dir}/${name}.yaml
+inyaml=${dir}/${name}-template.yaml
 
 function validate
 {
@@ -28,3 +31,9 @@ validate prefix
 validate key_type
 validate master
 validate os_user
+validate name
+validate yaml
+validate inyaml
+
+export kubectl=${dir}/bin/kubectl
+export kubeconfig=${dir}/.private/.${master}.cfg

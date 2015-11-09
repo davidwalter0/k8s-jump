@@ -1,0 +1,14 @@
+#!/bin/bash
+function usage
+{
+    cat <<EOF
+
+${0##*/} [--start|--stop|--status]
+
+Run a private git repo in kubernetes with k8s secret from ssh keys
+injected at create time from the user's ~/.ssh/id_rsa{,.pub} files.
+
+EOF
+    exit 3
+}
+

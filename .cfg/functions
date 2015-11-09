@@ -1,0 +1,109 @@
+#!/bin/bash
+# The next incarnation will use a git repo pulled into the
+# jenkins home
+
+# volumes mapped from git repo
+
+# These scripts assume a directory structure on the target of
+# under the jenkins home of 
+# .../
+#         /.cfg    # secrets [ until we get k8s secrets + vault ]
+#         /bin     # kubectl or other binaries
+#         /k8s     # yaml configs
+#         /scripts # this script and collections of other helpers
+
+function check
+{
+    if [[ ! ${dir:-} ]]; then
+        echo "dir: variable not set"
+        echo "A recipe in the script sourcing this file may work:"
+        echo "dir=\$(readlink -f \$(dirname \$(readlink -f \${0}))/..)"
+        exit 3
+    fi
+}
+
+check
+mkdir -p ${dir}/.cfg  ${dir}/.private
+chmod 700 ${dir} ${dir}/.cfg ${dir}/.private
+
+if [[ ! -e ${dir}/.cfg ]]; then
+    echo Unconfigured options directory .cfg
+    exit 3
+fi
+
+. ${dir}/.cfg/options
+
+# defer evaluation of the directory variable /go/home/k8s/jenkins is
+# to enable location independence.
+if ! [[ -e ${kubeconfig} ]]; then
+    printf "k8s username: ";
+    read -r username
+    printf "${username}'s password: " ;
+    read -sr password
+    export username=${username}
+    export password=${password}
+    ${kubectl} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
+               --insecure-skip-tls-verify=true
+    ${kubectl} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
+               --username=${username} --password=${password}
+    ${kubectl} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
+    ${kubectl} config --kubeconfig=${kubeconfig} use-context k8s
+fi
+
+export kubectl="${kubectl} --kubeconfig=${kubeconfig}"
+
+function start
+{
+    ${kubectl} create -f- <<EOF
+$(make-yaml)
+EOF
+
+}
+
+function stop
+{
+    ${kubectl} delete -f- <<EOF
+$(make-yaml)
+EOF
+}
+
+function status
+{
+    ${kubectl} get --output=wide node
+    ${kubectl} get --all-namespaces --output=wide rc,pods,svc,ep
+}
+
+function main
+{
+    rm -f ${yaml}
+    if (( debug )); then
+        echo "building yaml file ${yaml} for debugging"
+        if [[ ! -e ${yaml} ]]; then
+            make-yaml > ${yaml}
+        fi
+        chmod 600 ${yaml}
+    fi
+
+    if (( $# )) ; then
+        for arg in ${@}; do
+            case ${arg} in
+                --start)
+                    start
+                    ;;
+                --stop)
+                    stop
+                    ;;
+                --status)
+                    status
+                    ;;
+                *)
+                    usage
+            esac
+        done
+    else
+        usage
+    fi
+    exit
+}
+
+. ${dir}/.cfg/usage
